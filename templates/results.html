@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results for "{{ keyword }}"</title>
+    <style>
+        /* Existing styles omitted for brevity */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: 2px solid #333;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        header button {
+            padding: 10px 15px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        header button:hover {
+            background-color: #555;
+        }
+
+        .back-to-search {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            text-decoration: none;
+            font-size: 1em;
+            color: #333;
+            border: 2px solid #333;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .back-to-search:hover {
+            background-color: #f0f0f0;
+            border-color: #555;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: #f4f4f4;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        .result-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .visit-button {
+            padding: 8px 12px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            width: 100px;
+        }
+
+        .visit-button:hover {
+            background-color: #555;
+        }
+
+        .result-details span {
+            font-weight: bold;
+        }
+
+        .description {
+            margin-top: 5px;
+            font-size: 0.85em;
+            color: #777;
+        }
+
+        .validation-score {
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            color: #155724;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .pagination button.active {
+            background-color: #555;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .popup button {
+            margin-top: 10px;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            background-color: #333;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .popup button:hover {
+            background-color: #555;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/6.0.3/docx.min.js"></script>
+</head>
+<body>
+    <a href="/" class="back-to-search">Back to search</a>
+    <div class="container">
+        <header>
+            <h1>Top {{ results|length }} results after scrapping "{{ keyword }}"</h1>
+            <button onclick="showPopup()">Save results</button>
+        </header>
+
+        <ul id="resultsList"></ul>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="hidePopup()"></div>
+    <div class="popup" id="saveOptionsPopup">
+        <h2>Save as:</h2>
+        <button onclick="saveAs('pdf')">PDF</button>
+        <button onclick="saveAs('excel')">Excel</button>
+        <button onclick="saveAs('word')">Word</button>
+    </div>
+
+    <script>
+         const searchResults = JSON.parse('{{ results|tojson|safe }}');
+        const resultsPerPage = 15;
+        let currentPage = 1;
+
+        function renderResults(page) {
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = '';
+
+            const start = (page - 1) * resultsPerPage;
+            const end = start + resultsPerPage;
+            const paginatedResults = searchResults.slice(start, end);
+
+            paginatedResults.forEach(result => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="result-details">
+                        <p><span>Link :</span> ${result.link}</p>
+                        <p class="description">${result.description}</p>
+                        <a href="${result.link}" class="visit-button" target="_blank">Visit</a>
+                    </div>
+                    <div class="validation-score">Validation score: ${result.validation.final_score}</div>
+                `;
+                resultsList.appendChild(li);
+            });
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            const totalPages = Math.ceil(searchResults.length / resultsPerPage);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const button = document.createElement('button');
+                button.innerText = i;
+                button.className = i === currentPage ? 'active' : '';
+                button.onclick = () => goToPage(i);
+                pagination.appendChild(button);
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderResults(page);
+        }
+
+        function showPopup() {
+            document.getElementById('saveOptionsPopup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function hidePopup() {
+            document.getElementById('saveOptionsPopup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function saveAs(format) {
+            hidePopup();
+            if (format === 'pdf') {
+                saveAsPDF();
+            } else if (format === 'excel') {
+                saveAsExcel();
+            } else if (format === 'word') {
+                saveAsWord();
+            }
+        }
+
+        function saveAsPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const pageHeight = doc.internal.pageSize.height;
+            let y = 10;
+
+            doc.setFontSize(16);
+            doc.text("Search Results", 10, y);
+            doc.setFontSize(12);
+            y += 10;
+
+            searchResults.forEach((result, index) => {
+                if (y + 30 > pageHeight) {
+                    doc.addPage();
+                    y = 10;
+                }
+
+                doc.text(`${index + 1}. ${result.link}`, 10, y);
+                y += 10;
+                doc.text(result.description, 10, y);
+                y += 10;
+                doc.text(`Validation score: ${result.validation.final_score}`, 10, y);
+                y += 20;
+            });
+
+            doc.save('results.pdf');
+        }
+
+        function saveAsExcel() {
+            const wb = XLSX.utils.book_new();
+            const ws_data = [['Link', 'Description', 'Validation Score']];
+            searchResults.forEach(result => {
+                ws_data.push([result.link, result.description, result.validation.final_score]);
+            });
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            XLSX.utils.book_append_sheet(wb, ws, 'Results');
+            XLSX.writeFile(wb, 'results.xlsx');
+        }
+
+        function saveAsWord() {
+            const { Document, Packer, Paragraph } = window.docx;
+            const doc = new Document();
+
+            const paragraphs = searchResults.map(result => [
+                new Paragraph({ text: `Link: ${result.link}`, bullet: { level: 0 } }),
+                new Paragraph({ text: `Description: ${result.description}` }),
+                new Paragraph({ text: `Validation score: ${result.validation.final_score}` }),
+                new Paragraph({ text: '' })
+            ]).flat();
+
+            doc.addSection({
+                children: [
+                    new Paragraph({ text: "Search Results", heading: docx.HeadingLevel.HEADING_1 }),
+                    ...paragraphs
+                ]
+            });
+
+            Packer.toBlob(doc).then(blob => saveAs(blob, "results.docx"));
+        }
+
+        renderResults(currentPage);
+    </script>
+</body>
+</html>
