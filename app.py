@@ -1,6 +1,19 @@
 from flask import Flask, render_template, request
 from scraper import scrape_keyword
 from validators import domain_reputation, data_freshness, content_quality, content_relevance, calculate_final_score
+import subprocess
+import spacy
+
+# Download TextBlob corpora
+subprocess.run(["python", "-m", "textblob.download_corpora"])
+
+# Download the SpaCy model
+subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+
+# Import and initialize libraries
+from textblob import TextBlob
+nlp = spacy.load("en_core_web_sm")
+
 
 app = Flask(__name__)
 
