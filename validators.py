@@ -56,7 +56,7 @@ def content_quality(url):
         # blob = TextBlob(text)
         # readability_score = blob.sentiment.polarity
         # return min(max(readability_score, 0.0), 1.0)
-        return 0.25
+        return 0.05
     except Exception:
         return 0.0
 
