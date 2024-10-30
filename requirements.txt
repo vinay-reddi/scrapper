@@ -2,9 +2,10 @@ numpy
 flask
 beautifulsoup4
 requests
-spacy
+
 textblob
 scikit-learn
 nltk
-https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.2.0/en_core_web_sm-3.2.0.tar.gz
+# spacy
+# https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.2.0/en_core_web_sm-3.2.0.tar.gz
 gunicorn

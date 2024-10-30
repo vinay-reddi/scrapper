@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 from scraper import scrape_keyword
 from validators import domain_reputation, data_freshness, content_quality, content_relevance, calculate_final_score
 import subprocess
-import spacy
+# import spacy
 
 
 app = Flask(__name__)
