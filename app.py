@@ -4,16 +4,6 @@ from validators import domain_reputation, data_freshness, content_quality, conte
 import subprocess
 import spacy
 
-# Download TextBlob corpora
-subprocess.run(["python", "-m", "textblob.download_corpora"])
-
-# Download the SpaCy model
-subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
-
-# Import and initialize libraries
-from textblob import TextBlob
-nlp = spacy.load("en_core_web_sm")
-
 
 app = Flask(__name__)
 
@@ -24,7 +14,8 @@ def index():
 @app.route('/search', methods=['POST'])
 def search():
     keyword = request.form.get('keyword')
-    results = scrape_keyword(keyword, num_results=20)
+    num_results = request.form.get('num')
+    results = scrape_keyword(keyword, int(num_results))
 
     for result in results:
         url = result['link']
