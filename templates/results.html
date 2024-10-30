@@ -203,8 +203,7 @@
     <div class="popup" id="saveOptionsPopup">
         <h2>Save as:</h2>
         <button onclick="saveAs('pdf')">PDF</button>
-        <button onclick="saveAs('excel')">Excel</button>
-        <button onclick="saveAs('word')">Word</button>
+        
     </div>
 
     <script>
@@ -295,7 +294,7 @@
 
                 doc.text(`${index + 1}. ${result.link}`, 10, y);
                 y += 10;
-                doc.text(result.description, 10, y);
+                doc.text(result.description, 10, y, {maxWidth:180});
                 y += 10;
                 doc.text(`Validation score: ${result.validation.final_score}`, 10, y);
                 y += 20;
