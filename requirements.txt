@@ -6,4 +6,3 @@ textblob
 scikit-learn 
 nltk 
 numpy 
-gunicorn
